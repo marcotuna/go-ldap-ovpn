@@ -3,10 +3,11 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
+	"os"
 	"regexp"
 
 	"github.com/BurntSushi/toml"
+	log "gopkg.in/clog.v1"
 	ldap "gopkg.in/ldap.v2"
 )
 
@@ -58,8 +59,14 @@ func main() {
 
 	// Load Configuration File
 	if _, err := toml.DecodeFile("./config.toml", &conf); err != nil {
-		fmt.Println(err)
+		log.Error(2, "Could not Decode config file.")
 		return
+	}
+
+	err := log.New(log.CONSOLE, log.ConsoleConfig{})
+	if err != nil {
+		fmt.Printf("Fail to create new logger: %v\n", err)
+		os.Exit(1)
 	}
 
 	// No TLS, not recommended
@@ -67,7 +74,7 @@ func main() {
 
 	err = bindUser(ldapConn, conf.LDAP.BindDN, conf.LDAP.BindPassword)
 	if err != nil {
-		fmt.Println("Could not Bind to LDAP.")
+		log.Error(2, "Could not Bind to LDAP.")
 		return
 	}
 
@@ -75,7 +82,7 @@ func main() {
 
 	userFilter, ok := conf.LDAP.sanitizedUserQuery(searchUsername)
 	if ok {
-		log.Println("Could not Sanitize User Query.")
+		log.Error(2, "Could not Sanitize User Query.")
 		return
 	}
 
@@ -88,16 +95,16 @@ func main() {
 
 	sr, err := ldapConn.Search(searchRequest)
 	if err != nil || len(sr.Entries) < 1 {
-		log.Printf("LDAP: Failed search using filter '%s': %v", userFilter, err)
+		log.Error(2, "LDAP: Failed search using filter '%s': %v", userFilter, err)
 		return
 	} else if len(sr.Entries) > 1 {
-		log.Printf("LDAP: Filter '%s' returned more than one user", userFilter)
+		log.Error(2, "LDAP: Filter '%s' returned more than one user", userFilter)
 		return
 	}
 
 	userDN := sr.Entries[0].DN
 	if userDN == "" {
-		log.Printf("LDAP: Search was successful, but found no DN!")
+		log.Error(2, "LDAP: Search was successful, but found no DN!")
 		return
 	}
 
@@ -121,7 +128,7 @@ func main() {
 			return
 		}
 
-		log.Printf("LDAP: Fetching groups '%v' with filter '%s' and base '%s'", conf.LDAP.GroupMemberUID, groupFilter, groupDN)
+		log.Trace("LDAP: Fetching groups '%v' with filter '%s' and base '%s'", conf.LDAP.GroupMemberUID, groupFilter, groupDN)
 		groupSearch := ldap.NewSearchRequest(
 			groupDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, groupFilter,
 			[]string{conf.LDAP.GroupMemberUID},
@@ -129,10 +136,10 @@ func main() {
 
 		srg, err := ldapConn.Search(groupSearch)
 		if err != nil {
-			log.Printf("LDAP: Group search failed: %v", err)
+			log.Error(2, "LDAP: Group search failed: %v", err)
 			return
 		} else if len(sr.Entries) < 1 {
-			log.Printf("LDAP: Group search failed: 0 entries")
+			log.Error(2, "LDAP: Group search failed: 0 entries")
 			return
 		}
 
@@ -150,7 +157,7 @@ func main() {
 		}
 
 		if !isMember {
-			log.Printf("LDAP: Group membership test failed [username: %s, group_member_uid: %s", attributeUsername, conf.LDAP.GroupMemberUID)
+			log.Error(2, "LDAP: Group membership test failed [username: %s, group_member_uid: %s", attributeUsername, conf.LDAP.GroupMemberUID)
 			return
 		}
 	}
@@ -158,8 +165,10 @@ func main() {
 	// Check Username, Password
 	err = bindUser(ldapConn, userDN, searchPassword)
 	if err != nil {
-		fmt.Println("Could not Bind to LDAP.")
+		log.Error(2, "Could not Bind to LDAP.")
 		return
 	}
+
+	log.Trace("LDAP: User %s is authorized.", attributeUsername)
 
 }
