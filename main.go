@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -51,12 +52,15 @@ type LdapConfig struct {
 
 func main() {
 
+	configurationFile := flag.String("config", "config.toml", "Configuration file location")
+	flag.Parse()
+
 	searchUsername := os.Getenv("username")
 	searchPassword := os.Getenv("password")
 
 	// Load Configuration File
-	if _, err := toml.DecodeFile("./config.toml", &conf); err != nil {
-		fmt.Printf("Could not load or decode the configuration file.")
+	if _, err := toml.DecodeFile(*configurationFile, &conf); err != nil {
+		fmt.Printf("Could not load or decode the configuration file.\n")
 		os.Exit(1)
 	}
 
