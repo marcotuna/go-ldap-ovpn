@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/marcotuna/GoLDAPOpenVPN/conf"
 	"github.com/marcotuna/GoLDAPOpenVPN/controllers"
+	"github.com/marcotuna/GoLDAPOpenVPN/logger"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -31,34 +31,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Output to stdout instead of the default stderr
-	// Can be any io.Writer, see below for File example
-	switch strings.ToLower(configData.Log.Mode) {
-	case "console":
-		log.SetOutput(os.Stdout)
-		break
-	case "file":
-		logger := log.New()
-		log.SetOutput(logger.Writer())
+	initLogger, err := logger.NewRunner(configData)
 
-		f, err := os.OpenFile(configData.Log.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
-		if err != nil {
-			log.Errorf("Failed to initialize log file %s", err)
-			os.Exit(1)
-		}
-
-		logger.Out = f
-		break
-	default:
-		log.SetOutput(os.Stdout)
-	}
-
-	// Only log the warning severity or above.
-	logLevel, err := log.ParseLevel(configData.Log.Level)
 	if err != nil {
-		log.Errorf("%v", err.Error())
+		log.Error(2, "%v", err.Error())
 	}
-	log.SetLevel(logLevel)
+
+	initLogger.Initialize()
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()

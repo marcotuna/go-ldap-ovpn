@@ -1,9 +1,6 @@
 package conf
 
 import (
-	"errors"
-	"net"
-
 	"github.com/BurntSushi/toml"
 	"github.com/marcotuna/GoLDAPOpenVPN/pkg/auth/ldap"
 	log "github.com/sirupsen/logrus"
@@ -40,25 +37,5 @@ func LoadConfiguration(configurationFile string) (*Config, error) {
 		return nil, err
 	}
 
-	err = validateConfigurationArgs(confData)
-	if err != nil {
-		return nil, err
-	}
-
 	return confData, nil
-}
-
-func validateConfigurationArgs(confData *Config) error {
-
-	// Server IP
-	if net.ParseIP(confData.Server.IP) == nil {
-		return errors.New("Invalid Server IP Address. Must be a valid IPV4")
-	}
-
-	// Server Port
-	if confData.Server.Port < 1 || confData.Server.Port > 65535 {
-		return errors.New("Invalid Server Port number. Must be between 1-65535")
-	}
-
-	return nil
 }
