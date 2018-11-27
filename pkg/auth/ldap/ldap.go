@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	log "gopkg.in/clog.v1"
+	log "github.com/sirupsen/logrus"
 	ldap "gopkg.in/ldap.v2"
 )
 
@@ -54,7 +54,7 @@ func (ls *Source) sanitizedUserQuery(username string) (string, bool) {
 	// See http://tools.ietf.org/search/rfc4515
 	badCharacters := "\x00()*\\"
 	if strings.ContainsAny(username, badCharacters) {
-		log.Error(2, fmt.Sprintf("LDAP: Username contains invalid query characters: %s", username))
+		log.Errorf("LDAP: Username contains invalid query characters: %s", username)
 		return "", false
 	}
 
@@ -65,7 +65,7 @@ func (ls *Source) sanitizedUserDN(username string) (string, bool) {
 	// See http://tools.ietf.org/search/rfc4514: "special characters"
 	badCharacters := "\x00()*\\,='\"#+;<>"
 	if strings.ContainsAny(username, badCharacters) || strings.HasPrefix(username, " ") || strings.HasSuffix(username, " ") {
-		log.Error(2, fmt.Sprintf("LDAP: Username contains invalid query characters: %s", username))
+		log.Errorf("LDAP: Username contains invalid query characters: %s", username)
 		return "", false
 	}
 
@@ -76,7 +76,7 @@ func (ls *Source) sanitizedGroupFilter(group string) (string, bool) {
 	// See http://tools.ietf.org/search/rfc4515
 	badCharacters := "\x00*\\"
 	if strings.ContainsAny(group, badCharacters) {
-		log.Error(2, fmt.Sprintf("LDAP: Group filter invalid query characters: %s", group))
+		log.Errorf("LDAP: Group filter invalid query characters: %s", group)
 		return "", false
 	}
 
@@ -87,7 +87,7 @@ func (ls *Source) sanitizedGroupDN(groupDn string) (string, bool) {
 	// See http://tools.ietf.org/search/rfc4514: "special characters"
 	badCharacters := "\x00()*\\'\"#+;<>"
 	if strings.ContainsAny(groupDn, badCharacters) || strings.HasPrefix(groupDn, " ") || strings.HasSuffix(groupDn, " ") {
-		log.Error(2, fmt.Sprintf("LDAP: Group DN contains invalid query characters: %s", groupDn))
+		log.Errorf("LDAP: Group DN contains invalid query characters: %s", groupDn)
 		return "", false
 	}
 
@@ -95,16 +95,16 @@ func (ls *Source) sanitizedGroupDN(groupDn string) (string, bool) {
 }
 
 func (ls *Source) findUserDN(l *ldap.Conn, name string) (string, bool) {
-	log.Trace("Search for LDAP user: %s", name)
+	log.Tracef("Search for LDAP user: %s", name)
 	if len(ls.BindDN) > 0 && len(ls.BindPassword) > 0 {
 		// Replace placeholders with username
 		bindDN := strings.Replace(ls.BindDN, "%s", name, -1)
 		err := l.Bind(bindDN, ls.BindPassword)
 		if err != nil {
-			log.Trace("LDAP: Failed to bind as BindDN '%s': %v", bindDN, err)
+			log.Tracef("LDAP: Failed to bind as BindDN '%s': %v", bindDN, err)
 			return "", false
 		}
-		log.Trace("LDAP: Bound as BindDN: %s", bindDN)
+		log.Tracef("LDAP: Bound as BindDN: %s", bindDN)
 	} else {
 		log.Trace("LDAP: Proceeding with anonymous LDAP search")
 	}
@@ -115,7 +115,7 @@ func (ls *Source) findUserDN(l *ldap.Conn, name string) (string, bool) {
 		return "", false
 	}
 
-	log.Trace("LDAP: Searching for DN using filter '%s' and base '%s'", userFilter, ls.UserBase)
+	log.Tracef("LDAP: Searching for DN using filter '%s' and base '%s'", userFilter, ls.UserBase)
 	search := ldap.NewSearchRequest(
 		ls.UserBase, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0,
 		false, userFilter, []string{}, nil)
@@ -123,16 +123,16 @@ func (ls *Source) findUserDN(l *ldap.Conn, name string) (string, bool) {
 	// Ensure we found a user
 	sr, err := l.Search(search)
 	if err != nil || len(sr.Entries) < 1 {
-		log.Trace("LDAP: Failed search using filter '%s': %v", userFilter, err)
+		log.Tracef("LDAP: Failed search using filter '%s': %v", userFilter, err)
 		return "", false
 	} else if len(sr.Entries) > 1 {
-		log.Trace("LDAP: Filter '%s' returned more than one user", userFilter)
+		log.Tracef("LDAP: Filter '%s' returned more than one user", userFilter)
 		return "", false
 	}
 
 	userDN := sr.Entries[0].DN
 	if userDN == "" {
-		log.Error(2, "LDAP: Search was successful, but found no DN!")
+		log.Error("LDAP: Search was successful, but found no DN!")
 		return "", false
 	}
 
@@ -140,7 +140,7 @@ func (ls *Source) findUserDN(l *ldap.Conn, name string) (string, bool) {
 }
 
 func dial(ls *Source) (*ldap.Conn, error) {
-	log.Trace("LDAP: Dialing with security protocol '%v' without verifying: %v", ls.SecurityProtocol, ls.SkipVerify)
+	log.Tracef("LDAP: Dialing with security protocol '%v' without verifying: %v", ls.SecurityProtocol, ls.SkipVerify)
 
 	tlsCfg := &tls.Config{
 		ServerName:         ls.Host,
@@ -166,13 +166,13 @@ func dial(ls *Source) (*ldap.Conn, error) {
 }
 
 func bindUser(l *ldap.Conn, userDN, passwd string) error {
-	log.Trace("Binding with userDN: %s", userDN)
+	log.Tracef("Binding with userDN: %s", userDN)
 	err := l.Bind(userDN, passwd)
 	if err != nil {
-		log.Error(2, "LDAP authentication failed for '%s': %v", userDN, err)
+		log.Errorf("LDAP authentication failed for '%s': %v", userDN, err)
 		return err
 	}
-	log.Trace("Bound successfully with userDN: %s", userDN)
+	log.Tracef("Bound successfully with userDN: %s", userDN)
 	return err
 }
 
@@ -180,19 +180,19 @@ func bindUser(l *ldap.Conn, userDN, passwd string) error {
 func (ls *Source) SearchEntry(name, passwd string, directBind bool) (string, string, string, string, string, bool, bool) {
 	// See https://tools.ietf.org/search/rfc4513#section-5.1.2
 	if len(passwd) == 0 {
-		log.Trace("authentication failed for '%s' with empty password", name)
+		log.Tracef("authentication failed for '%s' with empty password", name)
 		return "", "", "", "", "", false, false
 	}
 	l, err := dial(ls)
 	if err != nil {
-		log.Error(2, "LDAP connect failed for '%s': %v", ls.Host, err)
+		log.Errorf("LDAP connect failed for '%s': %v", ls.Host, err)
 		return "", "", "", "", "", false, false
 	}
 	defer l.Close()
 
 	var userDN string
 	if directBind {
-		log.Trace("LDAP will bind directly via UserDN template: %s", ls.UserDN)
+		log.Tracef("LDAP will bind directly via UserDN template: %s", ls.UserDN)
 
 		var ok bool
 		userDN, ok = ls.sanitizedUserDN(name)
@@ -213,18 +213,18 @@ func (ls *Source) SearchEntry(name, passwd string, directBind bool) (string, str
 		// binds user (checking password) before looking-up attributes in user context
 		err = bindUser(l, userDN, passwd)
 		if err != nil {
-			log.Trace("bindUser with %s and %s. No results", userDN, passwd)
+			log.Tracef("bindUser with %s and %s. No results", userDN, passwd)
 			return "", "", "", "", "", false, false
 		}
 	}
 
 	userFilter, ok := ls.sanitizedUserQuery(name)
 	if !ok {
-		log.Trace("Could not sanitize user query from %s", name)
+		log.Tracef("Could not sanitize user query from %s", name)
 		return "", "", "", "", "", false, false
 	}
 
-	log.Trace("Fetching attributes '%v', '%v', '%v', '%v', '%v', '%v' with filter '%s' and base '%s'",
+	log.Tracef("Fetching attributes '%v', '%v', '%v', '%v', '%v', '%v' with filter '%s' and base '%s'",
 		ls.AttributeCN, ls.AttributeUsername, ls.AttributeName, ls.AttributeSurname, ls.AttributeMail, ls.UserUID, userFilter, userDN)
 	search := ldap.NewSearchRequest(
 		userDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, userFilter,
@@ -233,7 +233,7 @@ func (ls *Source) SearchEntry(name, passwd string, directBind bool) (string, str
 
 	sr, err := l.Search(search)
 	if err != nil {
-		log.Error(2, "LDAP: User search failed: %v", err)
+		log.Errorf("LDAP: User search failed: %v", err)
 		return "", "", "", "", "", false, false
 	} else if len(sr.Entries) < 1 {
 		if directBind {
@@ -263,7 +263,7 @@ func (ls *Source) SearchEntry(name, passwd string, directBind bool) (string, str
 			return "", "", "", "", "", false, false
 		}
 
-		log.Trace("LDAP: Fetching groups '%v' with filter '%s' and base '%s'", ls.GroupMemberUID, groupFilter, groupDN)
+		log.Tracef("LDAP: Fetching groups '%v' with filter '%s' and base '%s'", ls.GroupMemberUID, groupFilter, groupDN)
 		groupSearch := ldap.NewSearchRequest(
 			groupDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, groupFilter,
 			[]string{ls.GroupMemberUID},
@@ -271,10 +271,10 @@ func (ls *Source) SearchEntry(name, passwd string, directBind bool) (string, str
 
 		srg, err := l.Search(groupSearch)
 		if err != nil {
-			log.Error(2, "LDAP: Group search failed: %v", err)
+			log.Errorf("LDAP: Group search failed: %v", err)
 			return "", "", "", "", "", false, false
 		} else if len(srg.Entries) < 1 {
-			log.Error(2, "LDAP: Group search failed: 0 entries")
+			log.Errorf("LDAP: Group search failed: 0 entries")
 			return "", "", "", "", "", false, false
 		}
 
@@ -300,7 +300,7 @@ func (ls *Source) SearchEntry(name, passwd string, directBind bool) (string, str
 			for _, group := range srg.Entries {
 				for _, member := range group.GetAttributeValues(ls.GroupMemberUID) {
 
-					log.Trace("Member: '%v', Uid: '%v'", member, uid)
+					log.Tracef("Member: '%v', Uid: '%v'", member, uid)
 
 					re := regexp.MustCompile("^uid=[a-z0-9_.-][^,]*")
 					match := re.FindStringSubmatch(member)
@@ -313,14 +313,14 @@ func (ls *Source) SearchEntry(name, passwd string, directBind bool) (string, str
 		}
 
 		if !isMember {
-			log.Trace("LDAP: Group membership test failed [username: %s, group_member_uid: %s, user_uid: %s", username, ls.GroupMemberUID, uid)
+			log.Tracef("LDAP: Group membership test failed [username: %s, group_member_uid: %s, user_uid: %s", username, ls.GroupMemberUID, uid)
 			return "", "", "", "", "", false, false
 		}
 	}
 
 	isAdmin := false
 	if len(ls.AdminFilter) > 0 {
-		log.Trace("Checking admin with filter '%s' and base '%s'", ls.AdminFilter, userDN)
+		log.Tracef("Checking admin with filter '%s' and base '%s'", ls.AdminFilter, userDN)
 		search = ldap.NewSearchRequest(
 			userDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, ls.AdminFilter,
 			[]string{ls.AttributeName},
@@ -328,9 +328,9 @@ func (ls *Source) SearchEntry(name, passwd string, directBind bool) (string, str
 
 		sr, err = l.Search(search)
 		if err != nil {
-			log.Error(2, "LDAP: Admin search failed: %v", err)
+			log.Errorf("LDAP: Admin search failed: %v", err)
 		} else if len(sr.Entries) < 1 {
-			log.Error(2, "LDAP: Admin search failed: 0 entries")
+			log.Errorf("LDAP: Admin search failed: 0 entries")
 		} else {
 			isAdmin = true
 		}
@@ -354,7 +354,7 @@ func (ls *Source) LdapSearch(searchUsername string, searchPassword string) int {
 
 	err = bindUser(ldapConn, ls.BindDN, ls.BindPassword)
 	if err != nil {
-		log.Error(2, "Could not Bind to LDAP.")
+		log.Errorf("Could not Bind to LDAP.")
 		return 1
 	}
 
@@ -362,7 +362,7 @@ func (ls *Source) LdapSearch(searchUsername string, searchPassword string) int {
 
 	userFilter, ok := ls.sanitizedUserQuery(searchUsername)
 	if !ok {
-		log.Error(2, "Could not Sanitize User Query.")
+		log.Errorf("Could not Sanitize User Query.")
 		return 1
 	}
 
@@ -375,16 +375,16 @@ func (ls *Source) LdapSearch(searchUsername string, searchPassword string) int {
 
 	sr, err := ldapConn.Search(searchRequest)
 	if err != nil || len(sr.Entries) < 1 {
-		log.Error(2, "LDAP: Failed search using filter '%s': %v", userFilter, err)
+		log.Errorf("LDAP: Failed search using filter '%s': %v", userFilter, err)
 		return 1
 	} else if len(sr.Entries) > 1 {
-		log.Error(2, "LDAP: Filter '%s' returned more than one user", userFilter)
+		log.Errorf("LDAP: Filter '%s' returned more than one user", userFilter)
 		return 1
 	}
 
 	userDN := sr.Entries[0].DN
 	if userDN == "" {
-		log.Error(2, "LDAP: Search was successful, but found no DN!")
+		log.Errorf("LDAP: Search was successful, but found no DN!")
 		return 1
 	}
 
@@ -408,7 +408,7 @@ func (ls *Source) LdapSearch(searchUsername string, searchPassword string) int {
 			return 1
 		}
 
-		log.Trace("LDAP: Fetching groups '%v' with filter '%s' and base '%s'", ls.GroupMemberUID, groupFilter, groupDN)
+		log.Tracef("LDAP: Fetching groups '%v' with filter '%s' and base '%s'", ls.GroupMemberUID, groupFilter, groupDN)
 		groupSearch := ldap.NewSearchRequest(
 			groupDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, groupFilter,
 			[]string{ls.GroupMemberUID},
@@ -416,10 +416,10 @@ func (ls *Source) LdapSearch(searchUsername string, searchPassword string) int {
 
 		srg, err := ldapConn.Search(groupSearch)
 		if err != nil {
-			log.Error(2, "LDAP: Group search failed: %v", err)
+			log.Errorf("LDAP: Group search failed: %v", err)
 			return 1
 		} else if len(sr.Entries) < 1 {
-			log.Error(2, "LDAP: Group search failed: 0 entries")
+			log.Errorf("LDAP: Group search failed: 0 entries")
 			return 1
 		}
 
@@ -437,7 +437,7 @@ func (ls *Source) LdapSearch(searchUsername string, searchPassword string) int {
 		}
 
 		if !isMember {
-			log.Error(2, "LDAP: Group membership test failed [username: %s, group_member_uid: %s", attributeUsername, ls.GroupMemberUID)
+			log.Errorf("LDAP: Group membership test failed [username: %s, group_member_uid: %s", attributeUsername, ls.GroupMemberUID)
 			return 1
 		}
 	}
@@ -445,11 +445,11 @@ func (ls *Source) LdapSearch(searchUsername string, searchPassword string) int {
 	// Check Username, Password
 	err = bindUser(ldapConn, userDN, searchPassword)
 	if err != nil {
-		log.Error(2, "Could not Bind to LDAP.")
+		log.Error("Could not Bind to LDAP.")
 		return 1
 	}
 
-	log.Trace("LDAP: User %s is authorized.", attributeUsername)
+	log.Tracef("LDAP: User %s is authorized.", attributeUsername)
 
 	return 0
 }

@@ -12,5 +12,3 @@
 *.out
 
 config.toml
-ldap_matrix_rest
-ldap_ovpn
