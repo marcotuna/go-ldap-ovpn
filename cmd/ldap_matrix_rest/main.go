@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -71,11 +72,11 @@ func main() {
 	r.POST("/_matrix-internal/identity/v1/check_credentials", runnerCtrl.AuthMatrixSynapse)
 
 	srv := &http.Server{
-		Addr:    "0.0.0.0:8080",
+		Addr:    fmt.Sprintf("%s:%d", configData.Server.IP, configData.Server.Port),
 		Handler: r,
 	}
 
-	log.Infof("Webserver listening on %s:%d", "0.0.0.0", 8080)
+	log.Infof("Webserver listening on %s:%d", configData.Server.IP, configData.Server.Port)
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
