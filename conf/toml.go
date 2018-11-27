@@ -9,6 +9,14 @@ import (
 // Config Structure
 type Config struct {
 	LDAP ldap.Source
+	Log  LogCfg
+}
+
+// LogCfg related to log output/config
+type LogCfg struct {
+	Level string `toml:"level"`
+	Mode  string `toml:"mode"`
+	File  string `toml:"file"`
 }
 
 // LoadConfiguration File

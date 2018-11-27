@@ -6,19 +6,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/marcotuna/GoLDAPOpenVPN/conf"
 	"github.com/marcotuna/GoLDAPOpenVPN/controllers"
-	"github.com/marcotuna/GoLDAPOpenVPN/pkg/auth/ldap"
 	log "github.com/sirupsen/logrus"
 )
-
-// Config File Structure
-type Config struct {
-	LDAP ldap.Source
-}
 
 var (
 	configurationFile = flag.String("config", "config.toml", "Configuration file location")
@@ -31,27 +26,49 @@ func main() {
 	// Load Configuration File
 	configData, err := conf.LoadConfiguration(*configurationFile)
 	if err != nil {
-		log.Error(2, "%v", err.Error())
+		log.Errorf("%v", err.Error())
 		os.Exit(1)
 	}
 
 	// Output to stdout instead of the default stderr
 	// Can be any io.Writer, see below for File example
-	log.SetOutput(os.Stdout)
+	switch strings.ToLower(configData.Log.Mode) {
+	case "console":
+		log.SetOutput(os.Stdout)
+		break
+	case "file":
+		logger := log.New()
+		log.SetOutput(logger.Writer())
+
+		f, err := os.OpenFile(configData.Log.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
+		if err != nil {
+			log.Errorf("Failed to initialize log file %s", err)
+			os.Exit(1)
+		}
+
+		logger.Out = f
+		break
+	default:
+		log.SetOutput(os.Stdout)
+	}
 
 	// Only log the warning severity or above.
-	log.SetLevel(log.TraceLevel)
+	logLevel, err := log.ParseLevel(configData.Log.Level)
+	if err != nil {
+		log.Errorf("%v", err.Error())
+	}
+	log.SetLevel(logLevel)
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
-	authMatrixCtrl, err := controllers.NewAuthMatrixRunner(configData)
+	runnerCtrl, err := controllers.NewRunner(configData)
 
 	if err != nil {
 		log.Error(2, "%v", err.Error())
 	}
 
-	r.POST("/_matrix-internal/identity/v1/check_credentials", authMatrixCtrl.AuthMatrixSynapse)
+	r.POST("/_matrix-internal/identity/v1/check_credentials", runnerCtrl.AuthMatrixSynapse)
 
 	srv := &http.Server{
 		Addr:    "0.0.0.0:8080",

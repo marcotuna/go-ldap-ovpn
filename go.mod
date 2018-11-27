@@ -12,6 +12,8 @@ require (
 	github.com/mgutz/logxi v0.0.0-20161027140823-aebf8a7d67ab
 	github.com/sirupsen/logrus v1.2.0
 	github.com/ugorji/go/codec v0.0.0-20181125142609-66da5d561eb7 // indirect
+	golang.org/x/crypto v0.0.0-20181126163421-e657309f52e7 // indirect
+	golang.org/x/sys v0.0.0-20181122145206-62eef0e2fa9b // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20170511165959-379148ca0225 // indirect
 	gopkg.in/clog.v1 v1.2.0
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect

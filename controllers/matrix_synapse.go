@@ -5,29 +5,13 @@ import (
 	"io/ioutil"
 
 	"github.com/gin-gonic/gin"
-	"github.com/marcotuna/GoLDAPOpenVPN/conf"
 	"github.com/marcotuna/GoLDAPOpenVPN/models"
 	"github.com/marcotuna/GoLDAPOpenVPN/pkg/auth/ldap"
 	log "github.com/sirupsen/logrus"
 )
 
-// AuthMatrixRunner ...
-type AuthMatrixRunner struct {
-	Configuration conf.Config
-}
-
-// NewAuthMatrixRunner ...
-func NewAuthMatrixRunner(conf *conf.Config) (*AuthMatrixRunner, error) {
-
-	authMatrixRunnerStruct := &AuthMatrixRunner{
-		Configuration: *conf,
-	}
-
-	return authMatrixRunnerStruct, nil
-}
-
 // AuthMatrixSynapse ...
-func (ctrl AuthMatrixRunner) AuthMatrixSynapse(c *gin.Context) {
+func (ctrl Runner) AuthMatrixSynapse(c *gin.Context) {
 	// Receive POST data in RAW
 	reqBody := c.Request.Body
 	rawContent, _ := ioutil.ReadAll(reqBody)
