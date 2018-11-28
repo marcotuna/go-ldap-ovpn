@@ -22,27 +22,27 @@ const (
 
 // Source Structure
 type Source struct {
-	Host              string `toml:"host,omitempty"` // LDAP host
-	Port              int    `toml:"port,omitempty"` // Port number
-	SecurityProtocol  SecurityProtocol
-	SkipVerify        bool
-	BindDN            string `toml:"bind_dn,omitempty"`            // DN to bind with
-	BindPassword      string `toml:"bind_password,omitempty"`      // Bind DN password
-	UserBase          string `toml:"user_base,omitempty"`          // Base search path for users
-	UserDN            string `toml:"user_dn,omitempty"`            // Template for the DN of the user for simple auth
-	AttributeCN       string `toml:"attribute_cn,omitempty"`       // Common Name attribute
-	AttributeUsername string `toml:"attribute_username,omitempty"` // Username attribute
-	AttributeName     string `toml:"attribute_name,omitempty"`     // First name attribute
-	AttributeSurname  string `toml:"attribute_surname,omitempty"`  // Surname attribute
-	AttributeMail     string `toml:"attribute_mail,omitempty"`     // E-mail attribute
-	AttributesInBind  bool   `toml:"attributes_in_bind,omitempty"` // fetch attributes in bind context (not user)
-	Filter            string `toml:"filter,omitempty"`             // Query filter to validate entry
-	AdminFilter       string // Query filter to check if user is admin
-	GroupEnabled      bool   `toml:"group_enabled,omitempty"`    // if the group checking is enabled
-	GroupDN           string `toml:"group_dn,omitempty"`         // Group Search Base
-	GroupFilter       string `toml:"group_filter,omitempty"`     // Group Name Filter
-	GroupMemberUID    string `toml:"group_member_uid,omitempty"` // Group Attribute containing array of UserUID
-	UserUID           string `toml:"user_uid,omitempty"`         // User Attribute listed in Group
+	Host              string           `toml:"host,omitempty"` // LDAP host
+	Port              int              `toml:"port,omitempty"` // Port number
+	SecurityProtocol  SecurityProtocol `toml:"security_protocol,omitempty"`
+	SkipVerify        bool             `toml:"skip_verify,omitempty"`
+	BindDN            string           `toml:"bind_dn,omitempty"`            // DN to bind with
+	BindPassword      string           `toml:"bind_password,omitempty"`      // Bind DN password
+	UserBase          string           `toml:"user_base,omitempty"`          // Base search path for users
+	UserDN            string           `toml:"user_dn,omitempty"`            // Template for the DN of the user for simple auth
+	AttributeCN       string           `toml:"attribute_cn,omitempty"`       // Common Name attribute
+	AttributeUsername string           `toml:"attribute_username,omitempty"` // Username attribute
+	AttributeName     string           `toml:"attribute_name,omitempty"`     // First name attribute
+	AttributeSurname  string           `toml:"attribute_surname,omitempty"`  // Surname attribute
+	AttributeMail     string           `toml:"attribute_mail,omitempty"`     // E-mail attribute
+	AttributesInBind  bool             `toml:"attributes_in_bind,omitempty"` // fetch attributes in bind context (not user)
+	Filter            string           `toml:"filter,omitempty"`             // Query filter to validate entry
+	AdminFilter       string           // Query filter to check if user is admin
+	GroupEnabled      bool             `toml:"group_enabled,omitempty"`    // if the group checking is enabled
+	GroupDN           string           `toml:"group_dn,omitempty"`         // Group Search Base
+	GroupFilter       string           `toml:"group_filter,omitempty"`     // Group Name Filter
+	GroupMemberUID    string           `toml:"group_member_uid,omitempty"` // Group Attribute containing array of UserUID
+	UserUID           string           `toml:"user_uid,omitempty"`         // User Attribute listed in Group
 }
 
 // Initialize ...
