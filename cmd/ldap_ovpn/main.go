@@ -4,16 +4,11 @@ import (
 	"flag"
 	"os"
 
-	"github.com/marcotuna/GoLDAPOpenVPN/conf"
+	"github.com/marcotuna/GoLDAPOpenVPN/config"
 	"github.com/marcotuna/GoLDAPOpenVPN/logger"
 	"github.com/marcotuna/GoLDAPOpenVPN/pkg/auth/ldap"
 	log "github.com/sirupsen/logrus"
 )
-
-// Config File Structure
-type Config struct {
-	LDAP ldap.Source
-}
 
 var (
 	configurationFile = flag.String("config", "config.toml", "Configuration file location")
@@ -24,7 +19,7 @@ func main() {
 	flag.Parse()
 
 	// Load Configuration File
-	configData, err := conf.LoadConfiguration(*configurationFile)
+	configData, err := config.LoadConfiguration(*configurationFile)
 	if err != nil {
 		log.Errorf("%v", err.Error())
 		os.Exit(1)
@@ -38,10 +33,14 @@ func main() {
 
 	initLogger.Initialize()
 
+	ls := ldap.New(ldap.LDAP{
+		Settings:   &configData.LDAP,
+		Connection: nil,
+	})
+
 	searchUsername := os.Getenv("username")
 	searchPassword := os.Getenv("password")
 
-	ls := ldap.Initialize(configData.LDAP)
 	startAuthentication := ls.LdapSearch(searchUsername, searchPassword)
 
 	os.Exit(startAuthentication)

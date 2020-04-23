@@ -28,29 +28,33 @@ func (ctrl Runner) AuthMatrixSynapse(c *gin.Context) {
 	// Extract Username From Matrix User ID
 	userUsername := models.ExtractUsernameFromMatrixID(rcvUser.User.ID)
 
-	ldapConn := ldap.Initialize(ctrl.Configuration.LDAP)
-	commonName, username, fn, sn, mail, isAdmin, succeed := ldapConn.SearchEntry(userUsername, rcvUser.User.Password, false)
+	ldapConn := ldap.New(ldap.LDAP{
+		Settings:   &ctrl.Configuration.LDAP,
+		Connection: nil,
+	})
+	userEntry, err := ldapConn.SearchEntry(userUsername, rcvUser.User.Password, false)
 
-	log.Tracef("Fetched from LDAP: '%v', '%v', '%v', '%v', '%v', '%v', '%v'", commonName, username, fn, sn, mail, isAdmin, succeed)
+	if err != nil {
+		log.Error(2, err.Error())
+		return
+	}
 
 	authReq := models.Auth{
 		Success: false,
 		Mxid:    "",
 	}
 
-	if succeed {
-		authReq = models.Auth{
-			Success: true,
-			Mxid:    rcvUser.User.ID,
-			Profile: &models.UserProfile{
-				DisplayName: commonName,
-				ThreePids: []*models.UserThreePids{
-					&models.UserThreePids{Medium: "uid", Address: commonName},
-					&models.UserThreePids{Medium: "mail", Address: mail},
-					&models.UserThreePids{Medium: "name", Address: fn},
-				},
+	authReq = models.Auth{
+		Success: true,
+		Mxid:    rcvUser.User.ID,
+		Profile: &models.UserProfile{
+			DisplayName: userEntry.CommonName,
+			ThreePids: []*models.UserThreePids{
+				{Medium: "uid", Address: userEntry.CommonName},
+				{Medium: "mail", Address: userEntry.Mail},
+				{Medium: "name", Address: userEntry.FirstName},
 			},
-		}
+		},
 	}
 
 	// Send Response

@@ -4,17 +4,17 @@ import (
 	"os"
 	"strings"
 
-	"github.com/marcotuna/GoLDAPOpenVPN/conf"
+	"github.com/marcotuna/GoLDAPOpenVPN/config"
 	log "github.com/sirupsen/logrus"
 )
 
 // Runner ...
 type Runner struct {
-	Configuration conf.Config
+	Configuration config.Config
 }
 
 // NewRunner ...
-func NewRunner(conf *conf.Config) (*Runner, error) {
+func NewRunner(conf *config.Config) (*Runner, error) {
 
 	runnerStruct := &Runner{
 		Configuration: *conf,

@@ -1,4 +1,4 @@
-package conf
+package config
 
 import (
 	"github.com/BurntSushi/toml"
@@ -8,7 +8,7 @@ import (
 
 // Config Structure
 type Config struct {
-	LDAP   ldap.Source
+	LDAP   ldap.Settings
 	Log    LogCfg
 	Server ServerCfg
 }

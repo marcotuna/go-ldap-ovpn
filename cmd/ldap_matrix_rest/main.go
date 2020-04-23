@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/marcotuna/GoLDAPOpenVPN/conf"
+	"github.com/marcotuna/GoLDAPOpenVPN/config"
 	"github.com/marcotuna/GoLDAPOpenVPN/controllers"
 	"github.com/marcotuna/GoLDAPOpenVPN/logger"
 	log "github.com/sirupsen/logrus"
@@ -25,7 +25,7 @@ func main() {
 	flag.Parse()
 
 	// Load Configuration File
-	configData, err := conf.LoadConfiguration(*configurationFile)
+	configData, err := config.LoadConfiguration(*configurationFile)
 	if err != nil {
 		log.Errorf("%v", err.Error())
 		os.Exit(1)
