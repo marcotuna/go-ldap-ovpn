@@ -15,3 +15,4 @@
 config.toml
 cmd/ldap_matrix_rest/ldap_matrix_rest
 cmd/ldap_ovpn/ldap_ovpn
+bin/
