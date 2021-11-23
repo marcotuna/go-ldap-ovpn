@@ -42,3 +42,5 @@ mode = "console"
 # Either "Trace", "Info", "Warn", "Error", "Fatal", default is "Trace"
 level = "Trace"
 ```
+
+This file was saved as vpn.toml but can be any desired name.  
