@@ -28,7 +28,6 @@ func (ctrl Runner) Initialize() {
 	switch strings.ToLower(ctrl.Configuration.Log.Mode) {
 	case "console":
 		log.SetOutput(os.Stdout)
-		break
 	case "file":
 		logger := log.New()
 		log.SetOutput(logger.Writer())
@@ -40,7 +39,6 @@ func (ctrl Runner) Initialize() {
 		}
 
 		logger.Out = f
-		break
 	default:
 		log.SetOutput(os.Stdout)
 	}

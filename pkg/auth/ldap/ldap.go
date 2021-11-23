@@ -200,19 +200,23 @@ type UserEntry struct {
 func (l *LDAP) SearchEntry(name, passwd string, directBind bool) (*UserEntry, error) {
 	// See https://tools.ietf.org/search/rfc4513#section-5.1.2
 	if len(passwd) == 0 {
-		return nil, fmt.Errorf("Authentication failed for '%s' with empty password", name)
+		return nil, fmt.Errorf("authentication failed for '%s' with empty password", name)
 	}
 
 	_, err := l.dial()
 	if err != nil {
-		return nil, fmt.Errorf("LDAP connect failed for '%s': %v", l.Settings.URI, err)
+		return nil, fmt.Errorf("ldap connect failed for '%s': %v", l.Settings.URI, err)
+	}
+
+	if l == nil {
+		return nil, errors.New("connection is not available or ready")
+	}
+
+	if l.Connection == nil {
+		return nil, fmt.Errorf("ldap connection is not ready")
 	}
 
 	defer l.Connection.Close()
-
-	if l == nil {
-		return nil, errors.New("Connection is not available or ready")
-	}
 
 	var userDN string
 	if directBind {
@@ -221,7 +225,7 @@ func (l *LDAP) SearchEntry(name, passwd string, directBind bool) (*UserEntry, er
 		var ok bool
 		userDN, ok = l.sanitizedUserDN(name)
 		if !ok {
-			return nil, errors.New("Could not sanitize userDN")
+			return nil, errors.New("could not sanitize userDN")
 		}
 	} else {
 		log.Trace("LDAP will use BindDN")
@@ -229,7 +233,7 @@ func (l *LDAP) SearchEntry(name, passwd string, directBind bool) (*UserEntry, er
 		var found bool
 		userDN, found = l.findUserDN(name)
 		if !found {
-			return nil, errors.New("Could not find userDN")
+			return nil, errors.New("could not find userDN")
 		}
 	}
 
@@ -243,7 +247,7 @@ func (l *LDAP) SearchEntry(name, passwd string, directBind bool) (*UserEntry, er
 
 	userFilter, ok := l.sanitizedUserQuery(name)
 	if !ok {
-		return nil, fmt.Errorf("Could not sanitize user query from %s", name)
+		return nil, fmt.Errorf("could not sanitize user query from %s", name)
 	}
 
 	log.Tracef("Fetching attributes '%v', '%v', '%v', '%v', '%v', '%v' with filter '%s' and base '%s'",
@@ -276,11 +280,11 @@ func (l *LDAP) SearchEntry(name, passwd string, directBind bool) (*UserEntry, er
 	if l.Settings.GroupEnabled {
 		groupFilter, ok := l.sanitizedGroupFilter(l.Settings.GroupFilter)
 		if !ok {
-			return nil, errors.New("Could not sanitze groupFilter")
+			return nil, errors.New("could not sanitze groupFilter")
 		}
 		groupDN, ok := l.sanitizedGroupDN(l.Settings.GroupDN)
 		if !ok {
-			return nil, errors.New("Could not sanitize groupDN")
+			return nil, errors.New("could not sanitize groupDN")
 		}
 
 		log.Tracef("LDAP: Fetching groups '%v' with filter '%s' and base '%s'", l.Settings.GroupMemberUID, groupFilter, groupDN)
