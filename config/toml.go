@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/BurntSushi/toml"
-	"github.com/marcotuna/GoLDAPOpenVPN/pkg/auth/ldap"
+	"github.com/marcotuna/go-ldap-ovpn/pkg/auth/ldap"
 	log "github.com/sirupsen/logrus"
 )
 

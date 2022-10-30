@@ -1,0 +1,36 @@
+project_name: go-ldap-ovpn
+builds:
+  -
+    main: ./cmd/go-ldap-ovpn
+    id: "go-ldap-ovpn"
+    binary: go-ldap-ovpn
+    env: [CGO_ENABLED=0]
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+nfpms:
+  -
+    maintainer: Marco Santos <me@marcopsantos.com>
+    description: GoLang Tool for OpenVPN User Authentication from LDAP
+    homepage: https://github.com/marcotuna/go-ldap-ovpn
+    license: MIT
+    formats:
+    - deb
+    - rpm
+    - apk
+
+archives:
+  -
+    format: binary
+
+dockers:
+  -
+    id: go-ldap-ovpn
+    image_templates:
+    - "ghcr.io/marcotuna/{{ .ProjectName }}:{{ .Tag }}"
+    - "ghcr.io/marcotuna/{{ .ProjectName }}:latest"
+    dockerfile: "Dockerfile.minimal"

@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/marcotuna/GoLDAPOpenVPN/config"
+	"github.com/marcotuna/go-ldap-ovpn/config"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -4,9 +4,9 @@ import (
 	"flag"
 	"os"
 
-	"github.com/marcotuna/GoLDAPOpenVPN/config"
-	"github.com/marcotuna/GoLDAPOpenVPN/logger"
-	"github.com/marcotuna/GoLDAPOpenVPN/pkg/auth/ldap"
+	"github.com/marcotuna/go-ldap-ovpn/config"
+	"github.com/marcotuna/go-ldap-ovpn/logger"
+	"github.com/marcotuna/go-ldap-ovpn/pkg/auth/ldap"
 	log "github.com/sirupsen/logrus"
 )
 

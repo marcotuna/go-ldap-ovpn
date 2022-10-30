@@ -1,6 +1,6 @@
 package controllers
 
-import "github.com/marcotuna/GoLDAPOpenVPN/config"
+import "github.com/marcotuna/go-ldap-ovpn/config"
 
 // Runner ...
 type Runner struct {

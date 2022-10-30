@@ -1,14 +1,14 @@
-# GoLDAPOpenVPN
+# Go LDAP OpenVPN
 GoLang Tool for OpenVPN User Authentication from LDAP
 
 ## How to use?
 
 OpenVPN contains the auth-user-pass-verify method which allows to call an external tool to perform authentication validation  
 
-Download the ldap_ovpn and place it in a folder where the openvpn service has permissions to execute it.  
+Download the go-ldap-ovpn and place it in a folder where the openvpn service has permissions to execute it.  
 
 ```
-auth-user-pass-verify "/etc/openvpn/scripts/GoLDAPOpenVPN -config /etc/openvpn/scripts/vpn.toml" via-env
+auth-user-pass-verify "/etc/openvpn/scripts/go-ldap-ovpn -config /etc/openvpn/scripts/vpn.toml" via-env
 ```
 
 Create the configuration file where it will contain the ldap connection details.
